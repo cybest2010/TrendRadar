@@ -6,33 +6,33 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # 允许推送更改到仓库
-  pages: write     # 允许部署到 GitHub Pages
-  id-token: write  # 允许生成 Pages 的 JWT 令牌
+  contents: write  # 允许提交代码
+  pages: write     # 允许部署Pages
+  id-token: write  # 允许生成Pages的JWT令牌
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4  # 升级到最新版
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      
+
       - name: Install dependencies
         run: |
           pip install requests pytz
-      
+
       - name: Run crawler
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python main.py  # 确保此脚本生成/更新 index.html
-      
+        run: python main.py  # 确保生成index.html
+
       - name: Commit and push changes
         run: |
           git config --global user.name 'GitHub Actions'
@@ -41,23 +41,23 @@ jobs:
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date)" && git push)
 
   deploy:
-    needs: crawl  # 依赖 crawl 作业完成
+    needs: crawl  # 依赖crawl作业完成
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
-      
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3  # 关键修复：升级到v3
         with:
-          path: ./  # 部署所有文件（或指定包含 index.html 的目录）
-      
+          path: ./  # 部署根目录下的所有文件
+
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4  # 升级到最新版
